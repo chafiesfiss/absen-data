@@ -1,4 +1,20 @@
-name: Create or update JSON file
+name: Save Absen Data
+
+on:
+workflow_dispatch:
+inputs:
+data:
+description: 'JSON data for the absen entry'
+required: true
+
+jobs:
+update-data:
+runs-on: ubuntu-latest
+steps:
+- name: Checkout repository
+uses: actions/checkout@v2
+
+  - name: Create or update JSON file
     run: |
       # Buat file JSON jika belum ada, dengan array kosong sebagai konten awal.
       if [ ! -f absen_log.json ]; then
