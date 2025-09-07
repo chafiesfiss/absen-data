@@ -16,32 +16,28 @@ jobs:
 
       - name: Create or update JSON file
         run: |
-          # Buat file JSON jika belum ada dengan array kosong
+          # Buat file JSON jika belum ada, dengan array kosong sebagai konten awal.
           if [ ! -f absen_log.json ]; then
             echo "[]" > absen_log.json
           fi
 
-          # Baca data JSON yang sudah ada
+          # Baca seluruh konten file JSON yang sudah ada ke dalam variabel.
           CURRENT_DATA=$(cat absen_log.json)
           
-          # Dapatkan data baru dari input workflow
+          # Ambil data JSON baru dari input workflow.
           NEW_DATA='${{ github.event.inputs.data }}'
 
-          # Gabungkan data baru ke dalam array yang sudah ada
-          # Ini adalah langkah yang rumit karena Bash tidak menangani JSON dengan baik
-          # Lebih baik menggunakan jq, tapi kita pakai metode manual yang sederhana
-          
-          # Hapus tanda ']' terakhir dari string JSON
+          # Hapus karakter ']' terakhir dari string JSON untuk menyisipkan data baru.
           CURRENT_DATA_TRIMMED=${CURRENT_DATA%?}
 
-          # Gabungkan data baru (dengan tanda koma jika tidak kosong)
+          # Gabungkan data baru ke dalam array JSON yang sudah ada.
           if [ "${CURRENT_DATA_TRIMMED}" == "[" ]; then
             COMBINED_DATA="${CURRENT_DATA_TRIMMED}${NEW_DATA}]"
           else
             COMBINED_DATA="${CURRENT_DATA_TRIMMED},${NEW_DATA}]"
           fi
           
-          # Tulis kembali data gabungan ke file
+          # Tulis kembali seluruh data yang sudah digabungkan ke file.
           echo "${COMBINED_DATA}" > absen_log.json
 
       - name: Commit and Push changes
@@ -51,4 +47,3 @@ jobs:
           branch: main
           message: 'Update absen log from web app'
           force: false
-          
