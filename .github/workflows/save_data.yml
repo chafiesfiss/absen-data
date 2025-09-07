@@ -1,42 +1,33 @@
-name: Save Absen Data
+name: Create or update JSON file
+    run: |
+      # Buat file JSON jika belum ada, dengan array kosong sebagai konten awal.
+      if [ ! -f absen_log.json ]; then
+        echo "[]" > absen_log.json
+      fi
 
-on:
-  workflow_dispatch:
-    inputs:
-      data:
-        description: 'JSON data for the absen entry'
-        required: true
+      # Baca seluruh konten file JSON yang sudah ada ke dalam variabel.
+      CURRENT_DATA=$(cat absen_log.json)
+      
+      # Ambil data JSON baru dari input workflow.
+      NEW_DATA='${{ github.event.inputs.data }}'
+      
+      # Hapus karakter ']' terakhir dari string JSON untuk menyisipkan data baru.
+      CURRENT_DATA_TRIMMED=${CURRENT_DATA%?}
 
-jobs:
-  update-data:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      # Gabungkan data baru ke dalam array JSON yang sudah ada.
+      if [ "${CURRENT_DATA_TRIMMED}" == "[" ]; then
+        COMBINED_DATA="${CURRENT_DATA_TRIMMED}${NEW_DATA}]"
+      else
+        COMBINED_DATA="${CURRENT_DATA_TRIMMED},${NEW_DATA}]"
+      fi
+      
+      # Tulis kembali seluruh data yang sudah digabungkan ke file.
+      echo "${COMBINED_DATA}" > absen_log.json
 
-      - name: Create or update JSON file
-        run: |
-          if [ ! -f absen_log.json ]; then
-            echo "[]" > absen_log.json
-          fi
-
-          CURRENT_DATA=$(cat absen_log.json)
-          NEW_DATA='${{ github.event.inputs.data }}'
-          
-          CURRENT_DATA_TRIMMED=${CURRENT_DATA%?}
-
-          if [ "${CURRENT_DATA_TRIMMED}" == "[" ]; then
-            COMBINED_DATA="${CURRENT_DATA_TRIMMED}${NEW_DATA}]"
-          else
-            COMBINED_DATA="${CURRENT_DATA_TRIMMED},${NEW_DATA}]"
-          fi
-          
-          echo "${COMBINED_DATA}" > absen_log.json
-
-      - name: Commit and Push changes
-        uses: actions-js/push@v1.1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: main
-          commit_message: 'Update absen log from web app' # Ganti 'message' menjadi 'commit_message'
-          force: false
+  - name: Commit and Push changes
+    uses: actions-js/push@v1.1
+    with:
+      github_token: ${{ secrets.GITHUB_TOKEN }}
+      branch: main
+      commit_message: 'Update absen log from web app'
+      force: false
