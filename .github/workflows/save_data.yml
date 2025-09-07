@@ -16,28 +16,21 @@ jobs:
 
       - name: Create or update JSON file
         run: |
-          # Buat file JSON jika belum ada, dengan array kosong sebagai konten awal.
           if [ ! -f absen_log.json ]; then
             echo "[]" > absen_log.json
           fi
 
-          # Baca seluruh konten file JSON yang sudah ada ke dalam variabel.
           CURRENT_DATA=$(cat absen_log.json)
-          
-          # Ambil data JSON baru dari input workflow.
           NEW_DATA='${{ github.event.inputs.data }}'
-
-          # Hapus karakter ']' terakhir dari string JSON untuk menyisipkan data baru.
+          
           CURRENT_DATA_TRIMMED=${CURRENT_DATA%?}
 
-          # Gabungkan data baru ke dalam array JSON yang sudah ada.
           if [ "${CURRENT_DATA_TRIMMED}" == "[" ]; then
             COMBINED_DATA="${CURRENT_DATA_TRIMMED}${NEW_DATA}]"
           else
             COMBINED_DATA="${CURRENT_DATA_TRIMMED},${NEW_DATA}]"
           fi
           
-          # Tulis kembali seluruh data yang sudah digabungkan ke file.
           echo "${COMBINED_DATA}" > absen_log.json
 
       - name: Commit and Push changes
@@ -45,5 +38,5 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: main
-          message: 'Update absen log from web app'
+          commit_message: 'Update absen log from web app' # Ganti 'message' menjadi 'commit_message'
           force: false
