@@ -1,0 +1,50 @@
+name: Update Absen Data
+
+# Workflow ini akan berjalan ketika ada event 'repository_dispatch' dengan type 'absen_request'
+on:
+  repository_dispatch:
+    types: [absen_request]
+
+# Job ini akan dijalankan saat workflow dipicu
+jobs:
+  update-json:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Langkah 1: Checkout kode repositori
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          # Token ini dibutuhkan agar actions bisa push ke repositori
+          token: ${{ secrets.GITHUB_TOKEN }} 
+      
+      # Langkah 2: Setup Node.js dan install jq
+      - name: Setup environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq # Install jq untuk memanipulasi JSON
+
+      # Langkah 3: Perbarui file JSON dengan data baru
+      - name: Update JSON file
+        id: update_file
+        run: |
+          # Dapatkan data absen yang dikirim dari payload
+          NEW_ENTRY_JSON='${{ github.event.client_payload.data }}'
+          
+          # Cek apakah file absensi.json sudah ada, jika tidak, buat file baru dengan array kosong
+          if [ ! -f absensi.json ]; then
+            echo '[]' > absensi.json
+          fi
+
+          # Tambahkan data baru ke array yang sudah ada
+          UPDATED_JSON=$(jq --argjson new_data "$NEW_ENTRY_JSON" '. + [$new_data]' absensi.json)
+          
+          # Tulis kembali JSON yang sudah diperbarui ke file
+          echo "$UPDATED_JSON" > absensi.json
+
+      # Langkah 4: Commit dan push perubahan ke repositori
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Absen baru: ${{ github.event.client_payload.name }}"
+          file_pattern: 'absensi.json'
